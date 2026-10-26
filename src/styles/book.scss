@@ -1,0 +1,312 @@
+@use 'sass:list';
+
+// Aligned with the shadcn neutral theme.
+$paper: #fefefe;
+$ink: #171717;
+$muted: #737373;
+$cover: #171717;
+$cover-ink: #fafafa;
+
+$serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+$sans: 'Geist Variable', system-ui, sans-serif;
+$mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+$sender-colors: (
+    #171717,
+    #1d4ed8,
+    #b45309,
+    #15803d,
+    #b91c1c,
+    #7e22ce
+);
+
+/* ---------- Book ---------- */
+
+.book-stage {
+    position: relative;
+
+    &__shadow {
+        position: absolute;
+        inset: 0;
+        border-radius: 4px;
+        box-shadow:
+            0 0 0 1px rgba(0, 0, 0, 0.06),
+            0 1px 2px rgba(0, 0, 0, 0.05),
+            0 16px 40px -12px rgba(0, 0, 0, 0.2);
+        transition:
+            left 0.6s ease,
+            right 0.6s ease;
+        pointer-events: none;
+    }
+
+    &--closed-front &__shadow {
+        left: 50%;
+    }
+
+    &--closed-back &__shadow {
+        right: 50%;
+    }
+
+    &__spine {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 1px;
+        background: rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        z-index: 2;
+    }
+}
+
+.book {
+    margin: 0 auto;
+}
+
+.page {
+    background: $paper;
+    color: $ink;
+    overflow: hidden;
+    user-select: none;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    // Soft fold near the spine.
+    &--left::after {
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.08), transparent 7%);
+    }
+
+    &--right::after {
+        background: linear-gradient(to right, rgba(0, 0, 0, 0.08), transparent 7%);
+    }
+
+    &__inner {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__head,
+    &__foot {
+        flex-shrink: 0;
+        display: flex;
+        font-family: $sans;
+        font-size: 11px;
+        color: $muted;
+        white-space: nowrap;
+        overflow: hidden;
+
+        span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    &__head {
+        align-items: flex-start;
+    }
+
+    &__foot {
+        align-items: flex-end;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &--left &__head,
+    &--left &__foot {
+        justify-content: flex-start;
+    }
+
+    &--right &__head,
+    &--right &__foot {
+        justify-content: flex-end;
+    }
+
+    &__content {
+        display: block;
+        flex-shrink: 0;
+        overflow: hidden;
+        // Let highlights bleed slightly into the page margin.
+        overflow: clip;
+        overflow-clip-margin: 0.5em;
+        isolation: isolate;
+        font-family: $serif;
+        font-size: var(--fs, 15px);
+        line-height: 1.55;
+        color: $ink;
+    }
+}
+
+// Off-screen twin of .page__content used to measure blocks before pagination.
+.page-measure {
+    position: absolute;
+    top: 0;
+    left: -10000px;
+    visibility: hidden;
+    pointer-events: none;
+    height: auto;
+    overflow: visible;
+}
+
+/* ---------- Chat blocks (no vertical margins: heights must be additive) ---------- */
+
+.day {
+    padding: 0.3em 0 0.9em;
+    font-family: $sans;
+    font-size: 0.72em;
+    font-weight: 500;
+    color: $muted;
+}
+
+.sys {
+    padding: 0 0 0.85em;
+    font-family: $sans;
+    font-size: 0.78em;
+    color: $muted;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.msg {
+    padding: 0 0 0.8em;
+
+    &__meta {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6em;
+        padding-bottom: 0.1em;
+        font-family: $sans;
+        line-height: 1.3;
+    }
+
+    &__sender {
+        font-size: 0.78em;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__time {
+        flex-shrink: 0;
+        font-size: 0.72em;
+        color: $muted;
+    }
+
+    &__text {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    // Drawn with a pseudo-element so highlighting never changes measured height.
+    &--hl {
+        position: relative;
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset: -0.15em -0.4em 0.65em;
+            border-radius: 3px;
+            background: #fef08a;
+            z-index: -1;
+        }
+    }
+
+    @for $i from 1 through list.length($sender-colors) {
+        &--c#{$i - 1} &__sender {
+            color: list.nth($sender-colors, $i);
+        }
+    }
+}
+
+// Line number in the original export file.
+.ref {
+    font-family: $mono;
+    font-size: 0.62em;
+    color: rgba($muted, 0.8);
+
+    .msg__meta & {
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .sys & {
+        margin-right: 0.6em;
+    }
+}
+
+/* ---------- Covers ---------- */
+
+.cover {
+    background: $cover;
+    color: $cover-ink;
+    overflow: hidden;
+
+    &__frame {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 36px;
+        font-family: $sans;
+    }
+
+    &__label {
+        font-size: 12px;
+        font-weight: 500;
+        color: rgba($cover-ink, 0.55);
+    }
+
+    &__main {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    &__title {
+        margin: 0;
+        font-weight: 600;
+        font-size: clamp(24px, 2.6vw, 34px);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        overflow-wrap: anywhere;
+    }
+
+    &__subtitle,
+    &__range {
+        margin: 0;
+        font-size: 13px;
+        color: rgba($cover-ink, 0.6);
+    }
+
+    &__source {
+        margin: 0;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        font-size: 10px;
+        line-height: 1.45;
+        color: rgba($cover-ink, 0.65);
+
+        dt {
+            color: rgba($cover-ink, 0.4);
+        }
+
+        dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    &__hash {
+        font-family: $mono;
+    }
+}

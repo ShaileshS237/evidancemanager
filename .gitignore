@@ -1,0 +1,5 @@
+node_modules
+dist
+# Personal evidence files must never be committed.
+public/evidence/
+src/evidence-screenshots/
